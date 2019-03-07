@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+
 """
 RU:
 Это основная чать логики навыка Алисы "Морской бой"
@@ -123,6 +125,7 @@ GAME_RULES = '''Каждая клетка игрового поля обозна
 Для начала новой игры скажите "Новая игра" или "Выход"'''
 
 # кнопки помощи
+#Все кнопки
 BUTTONS = [
     {"title": "Мимо"},
     {"title": "Ранила"},
@@ -131,10 +134,24 @@ BUTTONS = [
     {"title": "Новая игра"},
     {"title": "Отменить ход"}
 ]
+# Кнопки после хода Алисы!
+BUTTONS_AFTER_ALICE_TURN = [
+    {"title": "Мимо"},
+    {"title": "Ранила"},
+    {"title": "Потопила"},
+]
+#Стандартные кнопки меню
+BUTTONS_MENU = [
+    {"title": "Показать поле"},
+    {"title": "Новая игра"},
+   # {"title": "Отменить ход"}
+]
 
 
 # Функция для непосредственной обработки диалога.
 def handle_dialog(request, response, user_storage):
+    #Задаем дефолтный набор кнопок сразу, поменяем его в течение кода
+    response.set_buttons(BUTTONS)
     # response.user_id
     if request.is_new_session or user_storage is None:
         # Это новый пользователь.
@@ -163,6 +180,7 @@ def handle_dialog(request, response, user_storage):
         backup_turn = user_storage
 
         # Приветствие
+        response.set_buttons(BUTTONS_MENU)
         response.set_text('Привет! Играем в морской бой. '+GAME_RULES)
         # Выходим из функции и ждем ответа
         return response, user_storage
@@ -179,6 +197,8 @@ def handle_dialog(request, response, user_storage):
         return response, user_storage
 
     # вывод поля юзера
+    #TODO Если корабль уничтожен, то для пользователя он выглядит как простреленные клетки. Следует использовать для него другие значки и, возможно, обводить клетки вокруг него.
+    # ^ Раненый корабль  X, а уже уничтоженный O - это неправильно, надо пофиксить
     if user_message == 'показатьполе':
         str_num = 1
         resp = '  '+' '.join([s.upper() for s in ALPHABET]) + '\n'
@@ -186,7 +206,7 @@ def handle_dialog(request, response, user_storage):
             resp += str(str_num).rjust(2)+' '.join([str(elem).replace('3', 'X').replace('2', 'O').replace('1', '~').replace('0', '~') for elem in row]) + '\n'
             str_num += 1
         response.set_text(resp)
-        response.set_buttons(BUTTONS)
+        response.set_buttons(BUTTONS_MENU)
         return response, user_storage
 
     # Пробуем перевести в координаты (между if и elif нельзя)
@@ -216,23 +236,26 @@ def handle_dialog(request, response, user_storage):
 
             # Если ходит Алиса
             elif not user_storage["users_turn"]:
-
+                response.set_buttons(BUTTONS_AFTER_ALICE_TURN)
                 backup_turn = user_storage
 
 
                 # Проверка наличия слова в словах о потоплении
                 if user_message in KILLED_WORDS:
                     alice_answer = alice_fires(user_storage, "убил")
+                    response.set_buttons(BUTTONS_MENU)
                     response.set_text(alice_answer)
 
                 # Проверка наличия слова в словах о попадании
                 elif user_message in INJURED_WORDS:
                     alice_answer = alice_fires(user_storage, "ранил")
+                    response.set_buttons(BUTTONS_MENU)
                     response.set_text(alice_answer)
 
                 # Проверка наличия слова в словах о промахе
                 elif user_message in MISSED_WORDS:
                     alice_answer = alice_fires(user_storage, "мимо")
+                    response.set_buttons(BUTTONS_MENU)
                     response.set_text(alice_answer)
 
                 # Проверка наличия слова в словах об отемене хода
@@ -251,6 +274,7 @@ def handle_dialog(request, response, user_storage):
 
             # Если игрок сказал не в свой ход
             else:
+                response.set_buttons(BUTTONS_AFTER_ALICE_TURN)
                 response.set_text(choice(PHRASES_FOR_USERS_TURN))
 
         # Проверка на присутствие шаблона re
@@ -272,10 +296,12 @@ def handle_dialog(request, response, user_storage):
                     if result_of_fire == 'Мимо':
                         user_storage["users_turn"] = False
                         alice_answer = alice_fires(user_storage, "remember")
+                        response.set_buttons(BUTTONS_AFTER_ALICE_TURN)
                         response.set_text('Мимо. Я хожу. ' + alice_answer)
                     else:
                         user_storage["alice_life"] -= 1
                         if user_storage["alice_life"] < 1:
+                            response.set_buttons(BUTTONS_MENU)
                             response.set_text("Вы победили меня, поздравляю! Спасибо за игру!")
                             user_storage = end(request, response)
                         else:
@@ -289,6 +315,7 @@ def handle_dialog(request, response, user_storage):
 
             # Если ход Алисы
             else:
+                response.set_buttons(BUTTONS_AFTER_ALICE_TURN)
                 response.set_text(choice(PHRASES_FOR_ALICES_TURN))
 
         # Если ничему не соответствует
@@ -304,8 +331,9 @@ def handle_dialog(request, response, user_storage):
         response.set_text("Я выиграла, спасибо за игру!")
         user_storage = end(request, response)
 
-    # В любом случае
-    response.set_buttons(BUTTONS)
+    # ----В любом случае-----
+    #Не в любом, надо использовать разные наборы кнопок в разных случаях, в начале функции зададим так, потом помняем (если сработает)
+    #response.set_buttons(BUTTONS)
     return response, user_storage
 
 
@@ -549,9 +577,7 @@ def end(request, response):
         "user_id": request.user_id,
         "users_turn": True,
         "alice_life": LIFE,
-
         "users_ships": [4, 3, 3, 2, 2, 2, 1, 1, 1, 1],
-
         "users_life": LIFE,
         "Target": [],
         "alices_matrix": ship_battle.field,
@@ -568,5 +594,6 @@ def end(request, response):
 
 
     response.set_text('Новая игра! Напомню правила. '+GAME_RULES)
+    response.set_buttons(BUTTONS_MENU)
 
     return user_storage
