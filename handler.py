@@ -172,7 +172,7 @@ def handle_dialog(request, response, user_storage):
             "last_turn": None,
             "last_turn_field": [],
             "directions": [[0, 1], [1, 0], [-1, 0], [0, -1]],
-            "to_log": True
+            "to_log": False
         }
 
         global backup_turn
