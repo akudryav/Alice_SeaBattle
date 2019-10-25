@@ -442,6 +442,7 @@ def alice_fires(user_data, happened):
                     user_data["users_matrix"][y + possible[1]][x + possible[0]] = 2
         # сам корабль отметим 3 чтоб отличался на карте
         for cell in user_data["Target"]:
+            x, y = cell  # Достаем координаты
             user_data["users_matrix"][y][x] = 3
 
         user_data["users_ships"].remove(len(user_data["Target"]))
