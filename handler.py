@@ -433,16 +433,17 @@ def alice_fires(user_data, happened):
     def delete_ship():
         for cell in user_data["Target"]:  # Проходим по клеткам корабля и отмечаем клетки в округе
             x, y = cell  # Достаем координаты
-
             # Возможные клетки
-            possible_cells = [(1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1), (-1, 1), (1, -1)]
+            possible_cells = [(1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1), (-1, 1), (1, -1), (0, 0)]
             for possible in possible_cells:
                 # Проверка на вхождение в поле
                 if -1 < x + possible[0] < 10 and -1 < y + possible[1] < 10:
                     # Отмечаем данную клетку
                     user_data["users_matrix"][y + possible[1]][x + possible[0]] = 2
-            # сам корабль отметим 3 чтоб отличался на карте
+        # сам корабль отметим 3 чтоб отличался на карте
+        for cell in user_data["Target"]:
             user_data["users_matrix"][y][x] = 3
+
         user_data["users_ships"].remove(len(user_data["Target"]))
         user_data["Target"] = []
         user_data["directions"] = [[0, 1], [1, 0], [-1, 0], [0, -1]]  # Обновляем возможные направления
