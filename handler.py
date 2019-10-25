@@ -256,20 +256,6 @@ def handle_dialog(request, response, user_storage):
                     response.set_buttons(BUTTONS_MENU)
                     response.set_text(alice_answer)
 
-                # Проверка наличия слова в словах об отемене хода
-                elif user_message in CANCEL_WORD:
-                    try:
-                        user_storage["alices_matrix"] = user_storage["last_turn_field"][0]
-                        user_storage["users_matrix"] = user_storage["last_turn_field"][1]
-                        response.set_text('Предыдущий ваш ход и ход Алисы отменены.')
-                        user_storage["last_turn_field"] = []
-                    except IndexError:
-                        response.set_text('Невозможно отменить ход')
-
-                # Проверка наличия слова в словах о начале игры
-                elif user_message in ENDING_WORDS:
-                    user_storage = end(request, response)
-
             # Если игрок сказал не в свой ход
             else:
                 response.set_buttons(BUTTONS_AFTER_ALICE_TURN)
@@ -440,10 +426,6 @@ def alice_fires(user_data, happened):
                 if -1 < x + possible[0] < 10 and -1 < y + possible[1] < 10:
                     # Отмечаем данную клетку
                     user_data["users_matrix"][y + possible[1]][x + possible[0]] = 2
-        # сам корабль отметим 3 чтоб отличался на карте
-        for cell in user_data["Target"]:
-            x, y = cell  # Достаем координаты
-            user_data["users_matrix"][y][x] = 3
 
         user_data["users_ships"].remove(len(user_data["Target"]))
         user_data["Target"] = []
@@ -560,12 +542,11 @@ def user_fires(matrix, coord):
                             break
 
             if sinking:
-                for cell in was:  # Проходимся по клеткам корабля
-                    matrix[cell[1]][cell[0]] = 2
                 output = 'Потоплен'
             else:
                 output = 'Ранен'
-
+    # обновляем поле для юзера
+    user_storage["alices_matrix"] = matrix
     return output
 
 # Начало новой игры
