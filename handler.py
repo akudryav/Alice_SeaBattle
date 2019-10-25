@@ -197,8 +197,6 @@ def handle_dialog(request, response, user_storage):
         return response, user_storage
 
     # вывод поля юзера
-    #TODO Если корабль уничтожен, то для пользователя он выглядит как простреленные клетки. Следует использовать для него другие значки и, возможно, обводить клетки вокруг него.
-    # ^ Раненый корабль  X, а уже уничтоженный O - это неправильно, надо пофиксить
     if user_message == 'показатьполе':
         str_num = 1
         resp = '  '+' '.join([s.upper() for s in ALPHABET]) + '\n'
@@ -399,17 +397,14 @@ def alice_fires(user_data, happened):
 
                 # Проверка на попадание в поле
                 if 0 <= _x <= 9 and 0 <= _y <= 9:
-
-                    # Если клетка стрелянная удаляем напрвление из возможных в конце цикла
-                    if user_data["users_matrix"][_y][_x] == 2:
-                        directions_to_del.append(possible_direction)
-                        break
-
                     # Если клетка не стрелянная стреляем
-                    elif user_data["users_matrix"][_y][_x] == 0:
+                    if user_data["users_matrix"][_y][_x] == 0:
                         cells_to_check[(_x, _y)] = possible_direction
                         chosen = True
-
+                        break
+                    # Иначе удаляем напрвление из возможных в конце цикла
+                    else:
+                        directions_to_del.append(possible_direction)
                 # Если клетка не попадает в поле удаляем из возможных в конце цикла
                 else:
                     directions_to_del.append(possible_direction)
@@ -440,12 +435,14 @@ def alice_fires(user_data, happened):
             x, y = cell  # Достаем координаты
 
             # Возможные клетки
-            possible_cells = [(1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1), (-1, 1), (1, -1), (0, 0)]
+            possible_cells = [(1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1), (-1, 1), (1, -1)]
             for possible in possible_cells:
                 # Проверка на вхождение в поле
                 if -1 < x + possible[0] < 10 and -1 < y + possible[1] < 10:
                     # Отмечаем данную клетку
                     user_data["users_matrix"][y + possible[1]][x + possible[0]] = 2
+            # сам корабль отметим 3 чтоб отличался на карте
+            user_data["users_matrix"][y][x] = 3
         user_data["users_ships"].remove(len(user_data["Target"]))
         user_data["Target"] = []
         user_data["directions"] = [[0, 1], [1, 0], [-1, 0], [0, -1]]  # Обновляем возможные направления
