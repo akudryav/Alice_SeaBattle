@@ -209,7 +209,7 @@ def handle_dialog(request, response, user_storage):
 
     # Пробуем перевести в координаты (между if и elif нельзя)
     try_to_make_coor = ''.join(findall(r'\w+', user_message))
-    matched = match('\w\d0*', try_to_make_coor)
+    matched = match(r'\w\d0*', try_to_make_coor)
 
     try:
         # Проверка слова в допустимых словах
